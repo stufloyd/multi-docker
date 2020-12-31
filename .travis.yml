@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t stufloyd/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run stufloyd/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t stufloyd/multi-client ./client
+  - docker build -t stufloyd/multi-nginx ./nginx
+  - docker build -t stufloyd/multi-server ./server
+  - docker build -t stufloyd/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push to docker hub
+  - docker push stufloyd/multi-client
+  - docker push stufloyd/multi-nginx
+  - docker push stufloyd/multi-server
+  - docker push stufloyd/multi-worker
